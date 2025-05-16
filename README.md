@@ -93,8 +93,6 @@ python crypto_toolkit.py
 ## Author
 
 - **YNK** - *3rd Year Cybersecurity Student*
-  - GitHub: [Your GitHub Profile]
-  - LinkedIn: [Your LinkedIn Profile]
 
 ## License
 
