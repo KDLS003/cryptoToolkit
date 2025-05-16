@@ -36,8 +36,8 @@ A comprehensive Python-based cryptography toolkit developed as a side project by
 
 ### Install
 ```bash
-git clone https://github.com/yourusername/crypto-toolkit.git
-cd crypto-toolkit
+git clone https://github.com/yourusername/cryptoToolkit.git
+cd cryptoToolkit
 pip install -r requirements.txt
 ```
 
