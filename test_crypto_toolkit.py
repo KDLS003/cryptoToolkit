@@ -1,9 +1,10 @@
 import unittest
 from crypto_toolkit import CryptoKit
 import os
+from unittest.mock import patch
 
 class TestCryptoKit(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test environment before each test"""
         self.crypto = CryptoKit()
         self.test_message = "Hello, World!"
@@ -95,6 +96,37 @@ class TestCryptoKit(unittest.TestCase):
         self.assertIsNotNone(keys)
         self.assertIn('private', keys)
         self.assertIn('public', keys)
+
+    @patch('crypto_toolkit.os')
+    def test_generate_aes_key(self, mock_os):
+        # Test AES key generation
+        key = self.crypto.generate_aes_key()
+        # ... assertions ...
+
+    def test_generate_rsa_keys(self):
+        # Test RSA key generation
+        keys = self.crypto.generate_rsa_keys()
+        # ... assertions ...
+
+    def test_hash_message(self):
+        # Test hashing a message
+        digest = self.crypto.hash_message('test')
+        # ... assertions ...
+
+    def test_hmac_message(self):
+        # Test HMAC
+        hmac_val = self.crypto.hmac_message('test', b'key')
+        # ... assertions ...
+
+    def test_vault_operations(self):
+        # Test password vault add/get/list/update/delete
+        self.crypto.add_password_to_vault('label', 'password', 'master')
+        pw = self.crypto.get_password_from_vault('label', 'master')
+        # ... assertions ...
+        self.crypto.update_password_in_vault('label', 'newpw', 'master')
+        # ... assertions ...
+        self.crypto.delete_password_from_vault('label', 'master')
+        # ... assertions ...
 
 if __name__ == '__main__':
     unittest.main() 

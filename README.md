@@ -1,101 +1,119 @@
-# Crypto Toolkit
+# Crypto Toolkit ![version](https://img.shields.io/badge/version-2.0-blue)
 
-A comprehensive Python-based cryptography toolkit developed as a side project by me. This project demonstrates practical implementation of various cryptographic concepts and secure data handling techniques.
+A modular, object-oriented cryptography and steganography toolkit for educational and practical use.
+
+---
+
+## What's New in v2.0
+- Full OOP refactor: code is now split into clear modules/classes
+- Educational Mode: step-by-step explanations for every operation
+- Color-coded, user-friendly CLI
+- All test files organized in a `tests/` folder
+- Improved help and onboarding
+- Cleaner directory structure
+- Expanded cryptography and steganography features
+- See the repo for the full changelog
+
+---
 
 ## Features
+- Symmetric and asymmetric encryption (AES, RSA, ECDSA, Ed25519)
+- Digital signatures and verification
+- File and text encryption/decryption
+- Steganography (hide/reveal messages in images, audio, video)
+- Password manager (encrypted vault)
+- Hybrid encryption (AES+RSA)
+- Colorful, menu-driven CLI
+- Educational mode with step-by-step explanations
 
-### Encryption
-- AES-256 encryption (text and files)
-- RSA-2048 encryption
-- Password-based key derivation
-- Secure key storage
+## Installation Guide
 
-### Digital Signatures
-- RSA message signing
-- File signing
-- Signature verification
-- Signature details viewer
+### 1. Install Python 3.8+
+- **Windows:**
+  - Download from [python.org](https://www.python.org/downloads/windows/)
+  - During install, check "Add Python to PATH"
+- **macOS:**
+  - Use [Homebrew](https://brew.sh/):
+    ```sh
+    brew install python
+    ```
+  - Or download from [python.org](https://www.python.org/downloads/macos/)
+- **Linux (Debian/Ubuntu):**
+    ```sh
+    sudo apt update
+    sudo apt install python3 python3-pip python3-venv
+    ```
+- **Linux (Fedora):**
+    ```sh
+    sudo dnf install python3 python3-pip python3-virtualenv
+    ```
 
-### Security
-- Secure random number generation
-- Password-based key derivation
-- Safe file handling
-- Input validation
+### 2. Clone the Repository
+```sh
+git clone https://github.com/KDLS003/cryptoToolkit.git
+cd cryptoToolkit
+```
 
-### User Interface
-- Clean CLI with colors
-- Progress indicators
-- Clear error messages
-- Easy-to-use menu
+### 3. Create a Virtual Environment (Recommended)
+```sh
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
-## Getting Started
-
-### Requirements
-- Python 3.8+
-- Required packages in `requirements.txt`
-
-### Install
-```bash
-git clone https://github.com/yourusername/crypto-toolkit.git
-cd crypto-toolkit
+### 4. Install Dependencies
+```sh
 pip install -r requirements.txt
 ```
 
-### Run
-```bash
-python crypto_toolkit.py
+#### Main dependencies:
+- cryptography
+- colorama
+- pillow
+- tqdm
+- opencv-python
+
+## Structure
+
+- `cryptokit.py`: Cryptography, key management, digital signatures, hybrid encryption, password vault
+- `stegokit.py`: Steganography (image, audio, video)
+- `ui.py`: User interface, CLI, menu logic
+- `main.py`: Entry point, application logic
+
+## Usage
+
+```sh
+python main.py
 ```
 
-## Menu Options
+## Example
 
-### Key Management
-1. Generate AES Key
-2. Generate RSA Keys
-3. List Saved Keys
+```python
+from cryptokit import CryptoKit
+from stegokit import StegoKit
 
-### Text Operations
-4. Encrypt Text (AES)
-5. Decrypt Text (AES)
-6. Encrypt Text (RSA)
-7. Decrypt Text (RSA)
+crypto = CryptoKit()
+stego = StegoKit()
 
-### Digital Signatures
-8. Sign Message
-9. Verify Signature
-10. Sign File
-11. Verify File Signature
-12. View Signature Details
+# Generate AES key
+key = crypto.generate_aes_key()
 
-### File Operations
-13. Encrypt File (AES)
-14. Decrypt File (AES)
+# Encrypt a message
+encrypted = crypto.aes_encrypt_message("Hello", "password123")
 
-## How It Works
+# Hide a message in an image
+stego.steg_hide("input.png", "Secret", "output.png")
+```
 
-### AES Encryption
-- Uses AES-256 in CBC mode
-- PKCS7 padding
-- Random IV generation
-- PBKDF2 key derivation
+## Running Tests
 
-### RSA Encryption
-- 2048-bit keys
-- OAEP padding with SHA-256
-- PEM format key storage
-- Secure key management
+```sh
+python -m unittest discover tests
+```
 
-### Digital Signatures
-- RSA-PSS with SHA-256
-- File and message signing
-- Signature verification
-- Signature details viewer
+## Contributing
 
-## Author
-
-- **YNK** - *3rd Year Cybersecurity Student*
-  - GitHub: [Your GitHub Profile]
-  - LinkedIn: [Your LinkedIn Profile]
+Pull requests are welcome! Please add tests for new features and follow the code style.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
+MIT 
