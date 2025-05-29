@@ -60,8 +60,21 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
+<<<<<<< HEAD
 ### 4. Install Dependencies
 ```sh
+=======
+## Getting Started
+
+### Requirements
+- Python 3.8+
+- Required packages in `requirements.txt`
+
+### Install
+```bash
+git clone https://github.com/yourusername/cryptoToolkit.git
+cd cryptoToolkit
+>>>>>>> fdac126d37c38c2d9b00a0ab665f890a59b78992
 pip install -r requirements.txt
 ```
 
@@ -112,8 +125,18 @@ python -m unittest discover tests
 
 ## Contributing
 
+<<<<<<< HEAD
 Pull requests are welcome! Please add tests for new features and follow the code style.
 
 ## License
 
 MIT 
+=======
+## Author
+
+- **YNK** - *3rd Year Cybersecurity Student*
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
+>>>>>>> fdac126d37c38c2d9b00a0ab665f890a59b78992
