@@ -1,6 +1,7 @@
 from cryptokit import CryptoKit
 from stegokit import StegoKit
 from ui import UI
+from password_utils import PasswordUtils, SecurityError
 import base64
 import os
 from colorama import Fore, Style
@@ -66,7 +67,7 @@ sub_menus = {
     "7": [("1", "Generate ECDSA Keys"), ("2", "Generate Ed25519 Keys"), ("3", "Sign Message (ECDSA)"), ("4", "Verify Signature (ECDSA)"), ("5", "Sign Message (Ed25519)"), ("6", "Verify Signature (Ed25519)")],
     "8": [("1", "Hybrid Encrypt File (AES+RSA)"), ("2", "Hybrid Decrypt File (AES+RSA)")],
     "9": [("1", "Export Key to File"), ("2", "Import Key from File")],
-    "10": [("1", "Add Password to Vault"), ("2", "Retrieve Password from Vault"), ("3", "List Password Labels in Vault"), ("4", "Update Password in Vault"), ("5", "Delete Password from Vault")],
+    "10": [("1", "Add Password to Vault"), ("2", "Retrieve Password from Vault"), ("3", "List Password Labels in Vault"), ("4", "Update Password in Vault"), ("5", "Delete Password from Vault"), ("6", "Change Master Password")],
     "11": [("1", "Exit")],
 }
 
@@ -123,6 +124,7 @@ class CryptoToolkitApp:
         self.stego = StegoKit()
         self.ui = UI
         self.show_steps = False
+        self.password_utils = PasswordUtils()
 
     def prompt_educational_mode(self):
         self.ui.print_header()
@@ -318,6 +320,15 @@ class CryptoToolkitApp:
 {Fore.CYAN}Step 1: Deleting a password from the vault{Style.RESET_ALL}
 - The vault is decrypted with your master password.
 - The password for the label is removed and the vault is re-encrypted.
+            """,
+            'vault_change_master': f"""
+{Fore.CYAN}Step 1: Changing your master password{Style.RESET_ALL}
+- The vault is decrypted with your current master password.
+- The new master password is checked for strength and confirmed.
+- The vault is re-encrypted with the new master password.
+
+{Fore.GREEN}Output Explanation:{Style.RESET_ALL}
+- Your vault is now protected by the new master password. Remember it!
             """,
         }
         if operation in explanations:
@@ -899,21 +910,26 @@ class CryptoToolkitApp:
                         if subchoice == "1":
                             self.ui.print_header()
                             self.ui.print_section("ADD PASSWORD TO VAULT")
+                            self.ui.print_info_block(descriptions["31"])
                             label = self.ui.get_input("Enter label for password: ")
-                            password = self.ui.get_input("Enter password to store: ")
-                            master_password = self.ui.get_input("Enter master password for vault: ")
+                            password = self.password_utils.get_secure_input("Enter password to store: ")
+                            self.ui.print_info_block(self.password_utils.password_strength_checker(password))
+                            master_password = self.password_utils.get_secure_input("Enter master password for vault: ")
                             try:
                                 self.crypto.add_password_to_vault(label, password, master_password)
                                 self.ui.print_success_block(f"Password for '{label}' added to vault.")
                                 self.explain('vault_add')
+                            except SecurityError as e:
+                                self.ui.print_error_block(str(e))
                             except Exception as e:
                                 self.ui.print_error_block(f"Error adding password: {str(e)}")
                             input("\nPress Enter to continue...")
                         elif subchoice == "2":
                             self.ui.print_header()
                             self.ui.print_section("RETRIEVE PASSWORD FROM VAULT")
+                            self.ui.print_info_block(descriptions["32"])
                             label = self.ui.get_input("Enter label to retrieve: ")
-                            master_password = self.ui.get_input("Enter master password for vault: ")
+                            master_password = self.password_utils.get_secure_input("Enter master password for vault: ")
                             try:
                                 password = self.crypto.get_password_from_vault(label, master_password)
                                 if password is not None:
@@ -921,13 +937,16 @@ class CryptoToolkitApp:
                                     self.explain('vault_get')
                                 else:
                                     self.ui.print_error_block(f"No password found for label '{label}'.")
+                            except SecurityError as e:
+                                self.ui.print_error_block(str(e))
                             except Exception as e:
                                 self.ui.print_error_block(f"Error retrieving password: {str(e)}")
                             input("\nPress Enter to continue...")
                         elif subchoice == "3":
                             self.ui.print_header()
                             self.ui.print_section("LIST PASSWORD LABELS IN VAULT")
-                            master_password = self.ui.get_input("Enter master password for vault: ")
+                            self.ui.print_info_block(descriptions["33"])
+                            master_password = self.password_utils.get_secure_input("Enter master password for vault: ")
                             try:
                                 labels = self.crypto.list_vault_labels(master_password)
                                 if labels:
@@ -937,33 +956,63 @@ class CryptoToolkitApp:
                                     self.explain('vault_list')
                                 else:
                                     self.ui.print_info_block("No passwords stored in vault.")
+                            except SecurityError as e:
+                                self.ui.print_error_block(str(e))
                             except Exception as e:
                                 self.ui.print_error_block(f"Error listing vault labels: {str(e)}")
                             input("\nPress Enter to continue...")
                         elif subchoice == "4":
                             self.ui.print_header()
                             self.ui.print_section("UPDATE PASSWORD IN VAULT")
+                            self.ui.print_info_block(descriptions["34"])
                             label = self.ui.get_input("Enter label to update: ")
-                            new_password = self.ui.get_input("Enter new password: ")
-                            master_password = self.ui.get_input("Enter master password for vault: ")
+                            new_password = self.password_utils.get_secure_input("Enter new password: ")
+                            self.ui.print_info_block(self.password_utils.password_strength_checker(new_password))
+                            master_password = self.password_utils.get_secure_input("Enter master password for vault: ")
                             try:
                                 self.crypto.update_password_in_vault(label, new_password, master_password)
                                 self.ui.print_success_block(f"Password for '{label}' updated in vault.")
                                 self.explain('vault_update')
+                            except SecurityError as e:
+                                self.ui.print_error_block(str(e))
                             except Exception as e:
                                 self.ui.print_error_block(f"Error updating password: {str(e)}")
                             input("\nPress Enter to continue...")
                         elif subchoice == "5":
                             self.ui.print_header()
                             self.ui.print_section("DELETE PASSWORD FROM VAULT")
+                            self.ui.print_info_block(descriptions["35"])
                             label = self.ui.get_input("Enter label to delete: ")
-                            master_password = self.ui.get_input("Enter master password for vault: ")
+                            master_password = self.password_utils.get_secure_input("Enter master password for vault: ")
                             try:
                                 self.crypto.delete_password_from_vault(label, master_password)
                                 self.ui.print_success_block(f"Password for '{label}' deleted from vault.")
                                 self.explain('vault_delete')
+                            except SecurityError as e:
+                                self.ui.print_error_block(str(e))
                             except Exception as e:
                                 self.ui.print_error_block(f"Error deleting password: {str(e)}")
+                            input("\nPress Enter to continue...")
+                        elif subchoice == "6":
+                            self.ui.print_header()
+                            self.ui.print_section("CHANGE MASTER PASSWORD")
+                            self.ui.print_info_block("Change the master password for your encrypted password vault.")
+                            old_password = self.password_utils.get_secure_input("Enter current master password: ")
+                            new_password = self.password_utils.get_secure_input("Enter new master password: ")
+                            confirm_password = self.password_utils.get_secure_input("Confirm new master password: ")
+                            if new_password != confirm_password:
+                                self.ui.print_error_block("New passwords do not match.")
+                                input("\nPress Enter to continue...")
+                                return
+                            self.ui.print_info_block(self.password_utils.password_strength_checker(new_password))
+                            try:
+                                self.crypto.change_master_password(old_password, new_password)
+                                self.ui.print_success_block("Master password changed successfully!")
+                                self.explain('vault_change_master')
+                            except SecurityError as e:
+                                self.ui.print_error_block(str(e))
+                            except Exception as e:
+                                self.ui.print_error_block(f"Error changing master password: {str(e)}")
                             input("\nPress Enter to continue...")
                     # Other (Exit)
                     elif choice == "11" and subchoice == "1":

@@ -11,14 +11,25 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 import hmac
+from password_utils import PasswordUtils, SecurityError
+import sys
 
 class CryptoKit:
     def __init__(self) -> None:
         self.backend = default_backend()
         self.rsa_keys = {}
-        self.data_dir = os.path.join(os.path.expanduser("~"), ".crypto_toolkit")
+        # Cross-platform secure data directory
+        if sys.platform == "win32":
+            self.data_dir = os.path.join(os.environ["LOCALAPPDATA"], "crypto_toolkit")
+        else:
+            self.data_dir = os.path.join(os.path.expanduser("~"), ".config", "crypto_toolkit")
         os.makedirs(self.data_dir, exist_ok=True)
+        try:
+            os.chmod(self.data_dir, 0o700)
+        except Exception:
+            pass  # On Windows, chmod may not work as expected
         self.key_file = os.path.join(self.data_dir, "crypto_keys.json")
+        self.password_utils = PasswordUtils()
         self.load_keys()
 
     def load_keys(self) -> None:
@@ -35,7 +46,10 @@ class CryptoKit:
             os.makedirs(os.path.dirname(self.key_file), exist_ok=True)
             with open(self.key_file, 'w') as f:
                 json.dump(self.rsa_keys, f)
-            os.chmod(self.key_file, 0o600)
+            try:
+                os.chmod(self.key_file, 0o600)
+            except Exception:
+                pass
         except Exception as e:
             print(f"Warning: Could not save keys: {e}")
 
@@ -571,33 +585,102 @@ class CryptoKit:
         encrypted = encryptor.update(padded) + encryptor.finalize()
         with open(path, 'wb') as f:
             f.write(salt + iv + encrypted)
+        try:
+            os.chmod(path, 0o600)
+        except Exception:
+            pass
 
     def add_password_to_vault(self, label: str, password: str, master_password: str) -> None:
         try:
+            # Validate inputs
+            self.password_utils.validate_vault_input(label, password)
+            
+            # Check rate limit
+            self.password_utils.check_rate_limit(master_password)
+            
+            # Load and update vault
             vault = self.load_vault(master_password)
-        except Exception:
-            vault = {}
-        vault[label] = password
-        self.save_vault(vault, master_password)
+            vault[label] = password
+            self.save_vault(vault, master_password)
+        except SecurityError as e:
+            raise e
+        except Exception as e:
+            self.password_utils.record_failed_attempt(master_password)
+            raise e
 
     def get_password_from_vault(self, label: str, master_password: str) -> Optional[str]:
-        vault = self.load_vault(master_password)
-        return vault.get(label)
+        try:
+            # Check rate limit
+            self.password_utils.check_rate_limit(master_password)
+            
+            # Get password
+            vault = self.load_vault(master_password)
+            return vault.get(label)
+        except SecurityError as e:
+            raise e
+        except Exception as e:
+            self.password_utils.record_failed_attempt(master_password)
+            raise e
 
     def list_vault_labels(self, master_password: str) -> list:
-        vault = self.load_vault(master_password)
-        return list(vault.keys())
+        try:
+            # Check rate limit
+            self.password_utils.check_rate_limit(master_password)
+            
+            # List labels
+            vault = self.load_vault(master_password)
+            return list(vault.keys())
+        except SecurityError as e:
+            raise e
+        except Exception as e:
+            self.password_utils.record_failed_attempt(master_password)
+            raise e
 
     def update_password_in_vault(self, label: str, new_password: str, master_password: str) -> None:
-        vault = self.load_vault(master_password)
-        if label not in vault:
-            raise ValueError("Label not found in vault.")
-        vault[label] = new_password
-        self.save_vault(vault, master_password)
+        try:
+            # Validate inputs
+            self.password_utils.validate_vault_input(label, new_password)
+            
+            # Check rate limit
+            self.password_utils.check_rate_limit(master_password)
+            
+            # Update vault
+            vault = self.load_vault(master_password)
+            if label not in vault:
+                raise ValueError("Label not found in vault.")
+            vault[label] = new_password
+            self.save_vault(vault, master_password)
+        except SecurityError as e:
+            raise e
+        except Exception as e:
+            self.password_utils.record_failed_attempt(master_password)
+            raise e
 
     def delete_password_from_vault(self, label: str, master_password: str) -> None:
-        vault = self.load_vault(master_password)
-        if label not in vault:
-            raise ValueError("Label not found in vault.")
-        del vault[label]
-        self.save_vault(vault, master_password) 
+        try:
+            # Check rate limit
+            self.password_utils.check_rate_limit(master_password)
+            
+            # Delete from vault
+            vault = self.load_vault(master_password)
+            if label not in vault:
+                raise ValueError("Label not found in vault.")
+            del vault[label]
+            self.save_vault(vault, master_password)
+        except SecurityError as e:
+            raise e
+        except Exception as e:
+            self.password_utils.record_failed_attempt(master_password)
+            raise e
+
+    def change_master_password(self, old_password: str, new_password: str) -> None:
+        """Change the master password for the vault."""
+        # Validate new password
+        self.password_utils.validate_vault_input("master", new_password)
+        # Load vault with old password
+        try:
+            vault = self.load_vault(old_password)
+        except Exception:
+            raise SecurityError("Old master password is incorrect.")
+        # Save vault with new password
+        self.save_vault(vault, new_password) 
